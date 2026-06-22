@@ -229,19 +229,23 @@ async function handleSceneClick(result) {
   if (result.type === 'ground' && plantingSeed.value) {
     const p = result.point
     const { gridX, gridZ } = toGridCoord(p.x, p.z)
-    sceneRef.value?.cropRenderer?.plant(plantingSeed.value, p.x, p.z)
+    const cropGroup = sceneRef.value?.cropRenderer?.plant(plantingSeed.value, p.x, p.z)
 
+    let backendPlantId = null
     try {
-      await api.post('/garden/plant', {
-        vegetableId: plantingSeed.value.id,
+      const res = await api.post('/garden/plant', {
+        seedId: plantingSeed.value.id,
         gridX,
         gridZ,
-        gardenId: gardenStore.currentGarden.id
       })
+      backendPlantId = res.data?.id
+      if (cropGroup && backendPlantId) {
+        cropGroup.userData.plantId = backendPlantId
+      }
     } catch {}
 
     plantStore.loadPlants([...plantStore.plants, {
-      id: Date.now(),
+      id: backendPlantId || Date.now(),
       vegetableName: plantingSeed.value.name,
       icon: plantingSeed.value.icon,
       growthStage: 0,
@@ -266,16 +270,16 @@ async function applyActionToCrop(cropGroup) {
   if (mode === 'water') {
     cr?.waterPlant(cropGroup)
     showToast(`💧 已给 ${ud.seedName || '植株'} 浇水！`)
-    try { await api.post('/garden/water', { cropId: ud.plantedAt }) } catch {}
+    try { await api.post('/garden/water', { plantId: ud.plantId }) } catch {}
   } else if (mode === 'fertilize') {
     ud.fertilized = true
     showToast(`🧪 已给 ${ud.seedName || '植株'} 施肥！`)
-    try { await api.post('/garden/fertilize', { cropId: ud.plantedAt }) } catch {}
+    try { await api.post('/garden/fertilize', { plantId: ud.plantId }) } catch {}
   } else if (mode === 'harvest') {
     cr?.removeCrop(cropGroup)
     plantStore.loadPlants(plantStore.plants.filter(p => p.id !== ud.seedId || p.gridX !== ud._gridX))
     showToast(`🧺 收获了 ${ud.seedName || '植株'}！`)
-    try { await api.post('/garden/harvest', { cropId: ud.plantedAt }) } catch {}
+    try { await api.post('/garden/harvest', { plantId: ud.plantId }) } catch {}
   }
 
   clearMode()
