@@ -229,7 +229,9 @@ async function handleSceneClick(result) {
   if (result.type === 'ground' && plantingSeed.value) {
     const p = result.point
     const { gridX, gridZ } = toGridCoord(p.x, p.z)
+    console.log('[GardenView] planting at', p.x, p.z, 'sceneRef:', !!sceneRef.value, 'cropRenderer:', !!sceneRef.value?.cropRenderer)
     const cropGroup = sceneRef.value?.cropRenderer?.plant(plantingSeed.value, p.x, p.z)
+    console.log('[GardenView] cropGroup returned:', !!cropGroup)
 
     let backendPlantId = null
     try {
