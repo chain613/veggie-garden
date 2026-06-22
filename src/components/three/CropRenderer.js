@@ -41,14 +41,22 @@ export class CropRenderer {
   }
 
   waterPlant(cropGroup) {
+    // 暂存原始颜色，变鲜绿后恢复
+    const originals = []
     cropGroup.children.forEach(child => {
       if (child.material?.color) {
+        originals.push({ child, color: child.material.color.getHex() })
         child.material.color.setHex(0x3cb84c)
       }
     })
     if (cropGroup.userData) {
       cropGroup.userData.watered = true
     }
+    setTimeout(() => {
+      originals.forEach(({ child, color }) => {
+        if (child.material?.color) child.material.color.setHex(color)
+      })
+    }, 1000)
   }
 
   waterAll() {
@@ -70,12 +78,6 @@ export class CropRenderer {
   highlightCrops(filterFn) {
     this.crops.forEach(c => {
       const eligible = filterFn ? filterFn(c) : true
-      c.children.forEach(child => {
-        if (child.material?.emissive) {
-          child.material.emissive.setHex(eligible ? 0x444400 : 0x000000)
-        }
-      })
-      // Add highlight ring for eligible crops
       if (eligible && !c.userData._highlightRing) {
         const ringGeo = new THREE.RingGeometry(0.35, 0.45, 32)
         ringGeo.rotateX(-Math.PI / 2)
@@ -93,11 +95,6 @@ export class CropRenderer {
 
   clearHighlights() {
     this.crops.forEach(c => {
-      c.children.forEach(child => {
-        if (child.material?.emissive) {
-          child.material.emissive.setHex(0x000000)
-        }
-      })
       if (c.userData._highlightRing) {
         c.remove(c.userData._highlightRing)
         c.userData._highlightRing = null

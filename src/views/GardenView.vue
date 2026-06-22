@@ -1,15 +1,16 @@
 <template>
   <div class="garden-view">
     <GardenScene ref="sceneRef" :region="gardenStore.currentGarden.region" @ready="onSceneReady" />
-    <GardenSwitcher :gardens="gardenStore.gardens" :current-id="gardenStore.currentGarden.id" @switch="switchGarden" />
     <Joystick @move="onJoystick" />
     <ActionBar @action="onAction" />
-    <RootToggle :active="rootActive" @toggle="toggleRoots" />
-
-    <NpcAvatarSelector
-      :modelValue="npcStore.avatar"
-      @update:modelValue="onAvatarChange"
+    <SettingsMenu
+      :gardens="gardenStore.gardens"
+      :current-garden-id="gardenStore.currentGarden.id"
+      :npc-avatar="npcStore.avatar"
+      @switch-garden="switchGarden"
+      @update-npc-avatar="onAvatarChange"
     />
+
     <div class="knock-prompt" v-if="showKnockPrompt">
       <button @click="knockOnDoor">👊 敲门请教</button>
     </div>
@@ -33,15 +34,13 @@
 </template>
 
 <script setup>
-import { ref, onUnmounted } from 'vue'
+import { ref, computed, onUnmounted } from 'vue'
 import GardenScene from '../components/three/GardenScene.vue'
 import Joystick from '../components/ui/Joystick.vue'
 import ActionBar from '../components/ui/ActionBar.vue'
-import RootToggle from '../components/ui/RootToggle.vue'
-import GardenSwitcher from '../components/ui/GardenSwitcher.vue'
+import SettingsMenu from './SettingsMenu.vue'
 import SeedSelector from '../components/ui/SeedSelector.vue'
 import PlantDetail from '../components/ui/PlantDetail.vue'
-import NpcAvatarSelector from '../components/npc/NpcAvatarSelector.vue'
 import NpcDialogue from '../components/npc/NpcDialogue.vue'
 import { useNpcStore } from '../stores/npc'
 import { useGardenStore } from '../stores/garden'
@@ -72,9 +71,7 @@ const modeLabelMap = {
   harvest: '🧺 点击植株采收'
 }
 
-function modeLabel() {
-  return modeLabelMap[activeMode.value] || ''
-}
+const modeLabel = computed(() => modeLabelMap[activeMode.value] || '')
 
 function showToast(msg) {
   toast.value = msg
@@ -100,7 +97,6 @@ function checkNpcTriggers() {
   const cam = sceneRef.value?.camera
   if (!npc || !cam) return
   const dist = cam.position.distanceTo(npc.position)
-  // 使用游戏内时间
   const hour = sceneRef.value?.getGameHour?.() ?? new Date().getHours()
   const isNighttime = hour < 5 || hour >= 21
   if (dist < 5) {
@@ -190,7 +186,6 @@ function clearMode() {
 }
 
 function toGridCoord(worldX, worldZ) {
-  // 菜地中心 (2, 0, 2)，15x15 格，cellSize=1
   const gridX = Math.round(worldX + 5.5)
   const gridZ = Math.round(worldZ + 5.5)
   return {
@@ -213,13 +208,11 @@ async function handleSceneClick(result) {
     return
   }
 
-  // 作物点击：选择模式下执行操作，否则显示详情
   if (result.type === 'crop' && result.crop) {
     if (activeMode.value) {
       applyActionToCrop(result.crop)
       return
     }
-    // 显示 PlantDetail
     const ud = result.crop.userData || {}
     plantStore.selectPlant({
       id: ud.seedId || result.crop.id,
@@ -233,13 +226,11 @@ async function handleSceneClick(result) {
     return
   }
 
-  // 地面点击：种植模式
   if (result.type === 'ground' && plantingSeed.value) {
     const p = result.point
     const { gridX, gridZ } = toGridCoord(p.x, p.z)
-    const crop = sceneRef.value?.cropRenderer?.plant(plantingSeed.value, p.x, p.z)
+    sceneRef.value?.cropRenderer?.plant(plantingSeed.value, p.x, p.z)
 
-    // 调后端 API
     try {
       await api.post('/garden/plant', {
         vegetableId: plantingSeed.value.id,
@@ -247,11 +238,8 @@ async function handleSceneClick(result) {
         gridZ,
         gardenId: gardenStore.currentGarden.id
       })
-    } catch {
-      // 后端不可用时本地已种植，后续同步
-    }
+    } catch {}
 
-    // 存入 plant store
     plantStore.loadPlants([...plantStore.plants, {
       id: Date.now(),
       vegetableName: plantingSeed.value.name,
@@ -263,7 +251,6 @@ async function handleSceneClick(result) {
       gridZ
     }])
 
-    // 解锁知识图鉴
     knowledgeStore.unlock(plantingSeed.value.id)
 
     showToast(`🌱 种下了 ${plantingSeed.value.name}！`)
@@ -282,9 +269,6 @@ async function applyActionToCrop(cropGroup) {
     try { await api.post('/garden/water', { cropId: ud.plantedAt }) } catch {}
   } else if (mode === 'fertilize') {
     ud.fertilized = true
-    cropGroup.children.forEach(child => {
-      if (child.material?.emissive) child.material.emissive.setHex(0x442200)
-    })
     showToast(`🧪 已给 ${ud.seedName || '植株'} 施肥！`)
     try { await api.post('/garden/fertilize', { cropId: ud.plantedAt }) } catch {}
   } else if (mode === 'harvest') {

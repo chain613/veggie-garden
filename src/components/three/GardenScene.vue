@@ -102,19 +102,56 @@ function createNpc() {
   npcGroup = new THREE.Group()
   npcGroup.name = 'npc'
 
-  const bodyGeo = new THREE.SphereGeometry(1.0, 32, 32)
-  const bodyMat = new THREE.MeshBasicMaterial({ color: 0x4488cc })
-  const body = new THREE.Mesh(bodyGeo, bodyMat)
-  body.position.y = 1.2
+  const skinMat = new THREE.MeshLambertMaterial({ color: 0xffccaa })
+  const pantsMat = new THREE.MeshLambertMaterial({ color: 0x3355aa })
+  const shirtMat = new THREE.MeshLambertMaterial({ color: 0xcc5533 })
+
+  // 躯干
+  const bodyGeo = new THREE.CylinderGeometry(0.25, 0.3, 1.2, 8)
+  const body = new THREE.Mesh(bodyGeo, shirtMat)
+  body.position.y = 0.9
   npcGroup.add(body)
 
-  const headGeo = new THREE.SphereGeometry(0.3, 16, 16)
-  const headMat = new THREE.MeshBasicMaterial({ color: 0x336699 })
+  // 双腿
+  const legGeo = new THREE.CylinderGeometry(0.1, 0.12, 0.7, 8)
+  const leftLeg = new THREE.Mesh(legGeo, pantsMat)
+  leftLeg.position.set(-0.12, 0.35, 0)
+  npcGroup.add(leftLeg)
+  const rightLeg = new THREE.Mesh(legGeo, pantsMat)
+  rightLeg.position.set(0.12, 0.35, 0)
+  npcGroup.add(rightLeg)
+
+  // 双臂
+  const armGeo = new THREE.CylinderGeometry(0.07, 0.09, 0.9, 8)
+  const leftArm = new THREE.Mesh(armGeo, skinMat)
+  leftArm.position.set(-0.4, 1.1, 0)
+  leftArm.rotation.z = 0.3
+  npcGroup.add(leftArm)
+  const rightArm = new THREE.Mesh(armGeo, skinMat)
+  rightArm.position.set(0.4, 1.1, 0)
+  rightArm.rotation.z = -0.3
+  npcGroup.add(rightArm)
+
+  // 头部
+  const headGeo = new THREE.SphereGeometry(0.25, 16, 16)
+  const headMat = new THREE.MeshLambertMaterial({ color: 0xffccaa })
   const head = new THREE.Mesh(headGeo, headMat)
-  head.position.y = 2.4
+  head.position.y = 1.7
   npcGroup.add(head)
 
-  const ringGeo = new THREE.RingGeometry(0.8, 1.0, 32)
+  // 草帽
+  const hatBaseGeo = new THREE.CylinderGeometry(0.3, 0.32, 0.1, 16)
+  const hatMat = new THREE.MeshLambertMaterial({ color: 0xd4a843 })
+  const hatBase = new THREE.Mesh(hatBaseGeo, hatMat)
+  hatBase.position.y = 1.85
+  npcGroup.add(hatBase)
+  const hatTopGeo = new THREE.ConeGeometry(0.22, 0.25, 16)
+  const hatTop = new THREE.Mesh(hatTopGeo, hatMat)
+  hatTop.position.y = 2.0
+  npcGroup.add(hatTop)
+
+  // 地面光环
+  const ringGeo = new THREE.RingGeometry(0.5, 0.65, 32)
   ringGeo.rotateX(-Math.PI / 2)
   const ringMat = new THREE.MeshBasicMaterial({ color: 0xffff00, side: THREE.DoubleSide })
   const ring = new THREE.Mesh(ringGeo, ringMat)

@@ -3,8 +3,8 @@ import { ref } from 'vue'
 
 export const useKnowledgeStore = defineStore('knowledge', () => {
   const vegetables = ref([
-    { id: 1, name: '白菜', icon: '🥬', season: '春秋', water: '中', light: '中', desc: '喜冷凉，播种后40-60天采收', unlocked: false },
-    { id: 2, name: '菠菜', icon: '🥬', season: '春秋', water: '中', light: '中', desc: '耐寒性强，富含铁质', unlocked: false },
+    { id: 1, name: '白菜', icon: '🥬', season: '春秋', water: '中', light: '中', desc: '喜冷凉，播种后40-60天采收', unlocked: true },
+    { id: 2, name: '菠菜', icon: '🥬', season: '春秋', water: '中', light: '中', desc: '耐寒性强，富含铁质', unlocked: true },
     { id: 3, name: '黄瓜', icon: '🥒', season: '春夏', water: '高', light: '高', desc: '需搭架，喜温暖湿润', unlocked: false },
     { id: 4, name: '番茄', icon: '🍅', season: '春夏', water: '中', light: '高', desc: '需打顶打岔，喜光', unlocked: false },
     { id: 5, name: '胡萝卜', icon: '🥕', season: '春秋', water: '中', light: '中', desc: '根茎类，喜疏松土壤', unlocked: false },
@@ -15,7 +15,7 @@ export const useKnowledgeStore = defineStore('knowledge', () => {
     { id: 10, name: '萝卜', icon: '🥕', season: '春秋', water: '中', light: '中', desc: '根茎类，生长快', unlocked: false }
   ])
 
-  const unlockedCount = ref(0)
+  const unlockedCount = ref(2)
 
   function unlock(id) {
     const v = vegetables.value.find(v => v.id === id)
