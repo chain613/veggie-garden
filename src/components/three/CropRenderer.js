@@ -1,11 +1,11 @@
 import * as THREE from 'three'
 
 const GROWTH_CONFIG = {
-  0: { stemH: 0.05, stemR: 0.02, leafR: 0.04, scale: 0.3, label: '种子' },
-  1: { stemH: 0.3, stemR: 0.06, leafR: 0.12, scale: 0.5, label: '幼苗' },
-  2: { stemH: 0.6, stemR: 0.1, leafR: 0.22, scale: 0.7, label: '成长' },
-  3: { stemH: 0.85, stemR: 0.13, leafR: 0.3, scale: 0.9, label: '开花' },
-  4: { stemH: 1.0, stemR: 0.15, leafR: 0.35, scale: 1.0, label: '成熟' }
+  0: { stemH: 0.15, stemR: 0.07, leafR: 0.12, scale: 0.3, label: '种子' },
+  1: { stemH: 0.55, stemR: 0.14, leafR: 0.25, scale: 0.5, label: '幼苗' },
+  2: { stemH: 0.95, stemR: 0.2, leafR: 0.4, scale: 0.7, label: '成长' },
+  3: { stemH: 1.3, stemR: 0.25, leafR: 0.5, scale: 0.9, label: '开花' },
+  4: { stemH: 1.6, stemR: 0.3, leafR: 0.6, scale: 1.0, label: '成熟' }
 }
 
 const TYPE_COLORS = {
@@ -59,11 +59,11 @@ export class CropRenderer {
       plantedAt: Date.now()
     }
 
-    // 土堆（始终保留）
-    const moundGeo = new THREE.CylinderGeometry(0.2, 0.3, 0.08, 8)
-    const moundMat = new THREE.MeshLambertMaterial({ color: 0x5c4033 })
+    // 土堆（加高加宽，颜色与土壤形成对比）
+    const moundGeo = new THREE.CylinderGeometry(0.25, 0.35, 0.12, 8)
+    const moundMat = new THREE.MeshLambertMaterial({ color: 0x8B6914 })
     const mound = new THREE.Mesh(moundGeo, moundMat)
-    mound.position.y = 0.04
+    mound.position.y = 0.06
     mound.name = '_mound'
     group.add(mound)
 
@@ -111,18 +111,27 @@ export class CropRenderer {
     const colors = TYPE_COLORS[vegType] || TYPE_COLORS.leafy
 
     if (stage === 0) {
-      // 仅极小嫩芽
-      const sproutGeo = new THREE.ConeGeometry(0.03, 0.06, 6)
+      // 嫩芽（直径0.16，确保远距离可见）
+      const sproutGeo = new THREE.ConeGeometry(0.08, 0.16, 8)
       const sproutMat = new THREE.MeshLambertMaterial({ color: colors.leaf })
       const sprout = new THREE.Mesh(sproutGeo, sproutMat)
-      sprout.position.y = 0.1
+      sprout.position.y = 0.16
       sprout.name = '_sprout'
       group.add(sprout)
+      // 两片子叶
+      for (let i = 0; i < 2; i++) {
+        const leafletGeo = new THREE.SphereGeometry(0.07, 6, 4)
+        const leaflet = new THREE.Mesh(leafletGeo, sproutMat)
+        leaflet.position.set((i === 0 ? 0.06 : -0.06), 0.13, 0)
+        leaflet.scale.set(1, 0.3, 1)
+        leaflet.name = '_leaflet'
+        group.add(leaflet)
+      }
       return
     }
 
     // 茎秆
-    const stemGeo = new THREE.CylinderGeometry(cfg.stemR * 0.6, cfg.stemR, cfg.stemH, 8)
+    const stemGeo = new THREE.CylinderGeometry(cfg.stemR * 0.7, cfg.stemR, cfg.stemH, 8)
     const stemMat = new THREE.MeshLambertMaterial({ color: colors.stem })
     const stem = new THREE.Mesh(stemGeo, stemMat)
     stem.position.y = cfg.stemH / 2 + 0.05
