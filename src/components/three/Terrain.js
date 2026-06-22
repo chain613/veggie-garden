@@ -26,9 +26,6 @@ export function createTerrain(scene, region) {
   // 远景田地
   createDistantField(scene, region)
 
-  // 篱笆
-  createFence(scene)
-
   return { ground, soil }
 }
 
@@ -77,22 +74,4 @@ function createDistantField(scene, region) {
   field.receiveShadow = true
   field.name = 'distantField'
   scene.add(field)
-}
-
-function createFence(scene) {
-  const postGeo = new THREE.CylinderGeometry(0.1, 0.1, 1.2, 8)
-  const postMat = new THREE.MeshLambertMaterial({ color: 0x8b6914 })
-  const railMat = new THREE.MeshLambertMaterial({ color: 0xa0782a })
-
-  for (let i = -7; i <= 7; i += 1.5) {
-    const post = new THREE.Mesh(postGeo, postMat)
-    post.position.set(i, 0.6, 9)
-    post.castShadow = true
-    scene.add(post)
-  }
-  for (let h = 0.3; h <= 0.9; h += 0.6) {
-    const rail = new THREE.Mesh(new THREE.BoxGeometry(15, 0.06, 0.06), railMat)
-    rail.position.set(0, h, 9)
-    scene.add(rail)
-  }
 }

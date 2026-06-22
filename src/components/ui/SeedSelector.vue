@@ -14,18 +14,13 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
+import { useKnowledgeStore } from '../../stores/knowledge'
+
 defineEmits(['select', 'close'])
 
-const seeds = [
-  { id: 1, name: '白菜', icon: '🥬' },
-  { id: 2, name: '菠菜', icon: '🥬' },
-  { id: 3, name: '黄瓜', icon: '🥒' },
-  { id: 4, name: '番茄', icon: '🍅' },
-  { id: 5, name: '胡萝卜', icon: '🥕' },
-  { id: 6, name: '辣椒', icon: '🌶️' },
-  { id: 7, name: '茄子', icon: '🍆' },
-  { id: 8, name: '豆角', icon: '🫘' }
-]
+const store = useKnowledgeStore()
+const seeds = computed(() => store.vegetables.filter(v => v.unlocked))
 </script>
 
 <style scoped>

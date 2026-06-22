@@ -16,6 +16,8 @@ import { WeedRenderer } from './WeedRenderer.js'
 import { WeatherEffects } from './WeatherEffects.js'
 import { CropRenderer } from './CropRenderer.js'
 
+const emit = defineEmits(['ready'])
+
 const container = ref(null)
 let scene, camera, renderer, animationId
 let skyData, player, rootRenderer, weedRenderer, weather, cropRenderer
@@ -32,6 +34,8 @@ onMounted(() => {
   initScene()
   animate()
   window.addEventListener('resize', onResize)
+
+  emit('ready', { scene, camera, cropRenderer, npcGroup, player, rootRenderer, weedRenderer, weather })
 })
 
 onUnmounted(() => {
@@ -39,6 +43,21 @@ onUnmounted(() => {
   window.removeEventListener('resize', onResize)
   renderer.dispose()
 })
+
+function getGameTime() {
+  return Date.now() * 0.0001
+}
+
+function getGameHour() {
+  const t = getGameTime()
+  const sunY = Math.sin(t)
+  // Map sun position to hour: sunY=0 at sunrise(6) and sunset(18), peak at noon(12)
+  const angle = Math.atan2(sunY, Math.cos(t))
+  let hour = (angle / Math.PI) * 12 + 12
+  if (hour < 0) hour += 24
+  if (hour >= 24) hour -= 24
+  return hour
+}
 
 function initScene() {
   const el = container.value
@@ -119,7 +138,7 @@ function animate() {
 
 function updateSky() {
   if (skyData) {
-    const time = Date.now() * 0.0001
+    const time = getGameTime()
     skyData.sun.position.x = 30 * Math.cos(time)
     skyData.sun.position.y = 35 * Math.sin(time)
     skyData.sun.visible = skyData.sun.position.y > 0
@@ -151,6 +170,21 @@ function onSceneClickInternal(e) {
     }
   }
 
+  // 检测作物
+  if (cropRenderer && cropRenderer.crops.length > 0) {
+    const cropHits = raycaster.intersectObjects(cropRenderer.crops, true)
+    if (cropHits.length > 0) {
+      let cropGroup = cropHits[0].object
+      while (cropGroup && cropGroup.parent && cropGroup.parent !== scene) {
+        cropGroup = cropGroup.parent
+      }
+      if (cropGroup && cropGroup.userData?.cropType === 'plant') {
+        if (sceneClickCallback) sceneClickCallback({ type: 'crop', crop: cropGroup, point: cropHits[0].point })
+        return
+      }
+    }
+  }
+
   // 检测地面
   if (groundPlane) {
     const groundHits = raycaster.intersectObject(groundPlane)
@@ -164,7 +198,10 @@ function onSceneClick(cb) {
   sceneClickCallback = cb
 }
 
-defineExpose({ player, rootRenderer, weedRenderer, scene, camera, weather, cropRenderer, npcGroup, onSceneClick })
+defineExpose({
+  player, rootRenderer, weedRenderer, scene, camera, weather, cropRenderer, npcGroup,
+  onSceneClick, getGameTime, getGameHour
+})
 </script>
 
 <style scoped>
