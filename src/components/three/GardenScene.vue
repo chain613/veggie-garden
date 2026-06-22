@@ -236,7 +236,14 @@ function onSceneClick(cb) {
 }
 
 defineExpose({
-  player, rootRenderer, weedRenderer, scene, camera, weather, cropRenderer, npcGroup,
+  get player() { return player },
+  get rootRenderer() { return rootRenderer },
+  get weedRenderer() { return weedRenderer },
+  get weather() { return weather },
+  get cropRenderer() { return cropRenderer },
+  get npcGroup() { return npcGroup },
+  get scene() { return scene },
+  get camera() { return camera },
   onSceneClick, getGameTime, getGameHour
 })
 </script>
